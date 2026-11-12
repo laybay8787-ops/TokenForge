@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TokenForge — прототип</title>
+<style>
+:root{
+  --bg:#0b0f17;--card:#131a26;--card2:#1a2333;--line:#232f45;
+  --txt:#e8edf6;--mut:#8b98ad;--acc:#14f195;--acc2:#9945ff;--bad:#ff5c6c;--warn:#ffb547;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:#05080e;color:var(--txt);display:flex;justify-content:center}
+.app{width:100%;max-width:420px;min-height:100dvh;background:var(--bg);display:flex;flex-direction:column;position:relative}
+@media(min-width:500px){body{align-items:center}.app{min-height:92dvh;max-height:940px;border-radius:28px;border:1px solid var(--line);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}}
+.screen{flex:1;overflow-y:auto;padding:16px 16px 96px;display:none;animation:fade .25s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1{font-size:22px;margin:8px 0 4px}h2{font-size:17px;margin:14px 0 8px}
+p.sub{color:var(--mut);font-size:13px;line-height:1.5}
+.topbar{display:flex;align-items:center;gap:10px;padding:4px 0 12px}
+.topbar .back{background:none;border:1px solid var(--line);color:var(--txt);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:16px}
+.logo{font-size:26px;font-weight:800;letter-spacing:-.5px}.logo b{color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}
+.row{display:flex;align-items:center;gap:10px}.spread{justify-content:space-between}.grow{flex:1}
+.mut{color:var(--mut);font-size:12px}.sm{font-size:13px}.b{font-weight:700}
+.tk-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#04110a;flex:none}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;background:var(--acc);color:#04110a;margin-top:10px;transition:transform .15s,opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.sec{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.dng{background:var(--bad);color:#fff}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--txt)}
+.btn.sm-btn{width:auto;padding:8px 14px;margin:0;font-size:13px}
+input,select,textarea{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:15px;margin-top:6px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+.err{color:var(--bad);font-size:12px;margin-top:4px;display:none}
+.tabs{display:flex;gap:6px;background:var(--card);padding:5px;border-radius:12px;margin:10px 0}
+.tabs button{flex:1;padding:9px;border:none;border-radius:9px;background:none;color:var(--mut);font-weight:600;font-size:13px;cursor:pointer}
+.tabs button.on{background:var(--card2);color:var(--txt)}
+.tabbar{position:absolute;bottom:0;left:0;right:0;display:flex;background:rgba(11,15,23,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.tabbar button{flex:1;background:none;border:none;color:var(--mut);font-size:10.5px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer}
+.tabbar button.on{color:var(--acc)}
+.tabbar svg{width:22px;height:22px}
+.badge{position:absolute;top:-2px;right:calc(50% - 16px);background:var(--bad);color:#fff;font-size:9px;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(20,241,149,.12);color:var(--acc)}
+.chip.v{background:rgba(153,69,255,.15);color:#c79bff}.chip.w{background:rgba(255,181,71,.12);color:var(--warn)}.chip.b{background:rgba(255,92,108,.12);color:var(--bad)}
+.kv{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px dashed var(--line)}
+.kv:last-child{border:none}.kv .v{font-weight:600}
+.prog{display:flex;gap:6px;margin:6px 0 14px}
+.prog i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.prog i.on{background:var(--acc)}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:10px;font-weight:600;cursor:pointer}
+.seg button.on{border-color:var(--acc);color:var(--acc);background:rgba(20,241,149,.08)}
+.chart{width:100%;height:150px;display:block}
+.empty{text-align:center;color:var(--mut);padding:36px 12px;font-size:13px}
+.toast{position:absolute;left:16px;right:16px;bottom:86px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;display:none;z-index:50;animation:fade .2s}
+.toast.on{display:block}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-end;z-index:60}
+.overlay.on{display:flex}
+.sheet{background:var(--card);border-radius:20px 20px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom));width:100%;animation:up .25s ease}
+@keyframes up{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+.pin-dots{display:flex;gap:14px;justify-content:center;margin:18px 0}
+.pin-dots i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--mut)}
+.pin-dots i.f{background:var(--acc);border-color:var(--acc)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:260px;margin:0 auto}
+.pad button{padding:16px;border:none;border-radius:14px;background:var(--card2);color:var(--txt);font-size:20px;font-weight:600;cursor:pointer}
+.pad button:active{background:var(--line)}
+.notif{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:12px;padding:11px 12px;margin:8px 0;font-size:13px}
+.list-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.list-item:last-child{border:none}
+.sw{width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;cursor:pointer;flex:none;transition:.2s}
+.sw::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s}
+.sw.on{background:var(--acc)}.sw.on::after{left:21px}
+.searchbox{position:relative}
+.searchbox input{padding-left:38px}
+.searchbox svg{position:absolute;left:12px;top:16px;width:18px;height:18px;stroke:var(--mut)}
+select{appearance:none}
+.copy{cursor:pointer;color:var(--acc);font-size:12px}
+hr{border:none;border-top:1px solid var(--line);margin:12px 0}
+.step-ic{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.center{text-align:center}
+.spin{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:sp 1s linear infinite;margin:0 auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.dot{width:8px;height:8px;border-radius:50%}
+.f-inline{display:flex;gap:8px;flex-wrap:wrap}
+.f-inline button{padding:7px 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--mut);font-size:12px;cursor:pointer}
+.f-inline button.on{border-color:var(--acc);color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<!-- ОНБОРДИНГ -->
+<div class="screen on" id="scr-onboard">
+  <div class="center" style="padding-top:60px">
+    <div class="logo" style="font-size:34px">Token<b>Forge</b></div>
+    <p class="sub" style="margin-top:8px">Создавайте токены без кода.<br>Пул ликвидности — автоматически. Solana.</p>
+  </div>
+  <div class="card" style="margin-top:30px">
+    <div class="kv"><span class="mut">Эмиссия токена</span><span class="v">3 шага · &lt; 60 сек</span></div>
+    <div class="kv"><span class="mut">Пул ликвидности</span><span class="v">авто (bonding curve)</span></div>
+    <div class="kv"><span class="mut">Обмен</span><span class="v">SOL / USDT · комиссия ≤ 1%</span></div>
+    <div class="kv"><span class="mut">Анти-рагпул</span><span class="v">лимит вывода 30%</span></div>
+  </div>
+  <button class="btn" onclick="ob.show('reg')">Создать аккаунт</button>
+  <button class="btn sec" onclick="demo()">Демо-вход (без регистрации)</button>
+</div>
+
+<!-- РЕГИСТРАЦИЯ -->
+<div class="screen" id="scr-reg">
+  <div class="prog"><i class="on"></i><i></i><i></i><i></i></div>
+  <h1>Регистрация</h1>
+  <p class="sub">История №1–2: все поля обязательны, ошибки показываем до отправки формы.</p>
+  <label class="mut sm">Электронная почта</label>
+  <input id="r-email" type="email" placeholder="you@mail.com" oninput="ob.validate()">
+  <div class="err" id="e-email"></div>
+  <label class="mut sm" style="margin-top:12px;display:block">Пароль</label>
+  <div style="position:relative">
+    <input id="r-pass" type="password" placeholder="Мин. 8 символов, буква и цифра" oninput="ob.validate()">
+    <span class="copy" style="position:absolute;right:12px;top:18px" onclick="ob.togglePass('r-pass',this)">показать</span>
+  </div>
+  <div class="err" id="e-pass"></div>
+  <label class="mut sm" style="margin-top:12px;display:block">Подтверждение пароля</label>
+  <input id="r-pass2" type="password" placeholder="Повторите пароль" oninput="ob.validate()">
+  <div class="err" id="e-pass2"></div>
+  <button class="btn" id="r-next" disabled onclick="ob.register()">Продолжить</button>
+</div>
+
+<!-- ПОДТВЕРЖДЕНИЕ ПОЧТЫ -->
+<div class="screen" id="scr-verify">
+  <div class="prog"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+  <h1>Подтверждение почты</h1>
+  <p class="sub">История №3: код отправлен на <b id="v-email"></b>. До подтверждения операции с активами ограничены.</p>
+  <div class="card center"><p class="mut sm">Код подтверждения (демо)</p><div class="b" style="font-size:28px;letter-spacing:6px" id="v-code"></div></div>
+  <input id="v-input" inputmode="numeric" maxlength="6" placeholder="Введите 6-значный код" oninput="ob.checkCode()">
+  <div class="err" id="e-code"></div>
+  <button class="btn" id="v-next" disabled onclick="ob.toWallet()">Подтвердить</button>
+  <button class="btn ghost" id="v-resend" onclick="ob.resend()">Отправить код повторно <span class="mut" id="v-timer"></span></button>
+</div>
+
+<!-- КОШЕЛЁК -->
+<div class="screen" id="scr-wallet">
+  <div class="prog"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+  <h1>Подключение кошелька</h1>
+  <p class="sub">История №4: выберите Solana-кошелёк. Приватный ключ не запрашивается и не сохраняется.</p>
+  <div id="w-list"></div>
+</div>
+
+<!-- ЗАЩИТА (PIN / БИОМЕТРИЯ) -->
+<div class="screen" id="scr-pin">
+  <div class="prog"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <h1 class="center">Защита входа</h1>
+  <p class="sub center">История №5: PIN-код будет использоваться для входа и подтверждения операций.</p>
+  <div class="card row spread"><div><p class="b sm">Вход по биометрии</p><p class="mut">Face ID / отпечаток (если доступно)</p></div><div class="sw" id="bio-sw" onclick="this.classList.toggle('on')"></div></div>
+  <p class="b center" style="margin-top:16px" id="pin-label">Задайте PIN-код (4 цифры)</p>
+  <div class="pin-dots" id="pin-dots"><i></i><i></i><i></i><i></i></div>
+  <div class="pad" id="pin-pad"></div>
+</div>
+
+<!-- ГЛАВНАЯ / ЛЕНТА -->
+<div class="screen" id="scr-feed">
+  <div class="topbar"><div class="logo" style="font-size:20px">Token<b>Forge</b></div><span class="grow"></span><span class="chip" id="kyc-chip" style="display:none">KYC</span><button class="btn sm-btn ghost" onclick="go('profile')" id="bell-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align:-3px"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button></div>
+  <div class="searchbox">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+    <input id="f-search" placeholder="Поиск по названию или тикеру…" oninput="renderFeed()">
+  </div>
+  <div class="tabs">
+    <button class="on" id="tab-new" onclick="feedTab='new';renderFeed()">Новые</button>
+    <button id="tab-pop" onclick="feedTab='pop';renderFeed()">Популярные</button>
+    <button id="tab-subs" onclick="feedTab='subs';renderFeed()">Подписки</button>
+  </div>
+  <div id="feed-list"></div>
+</div>
+
+<!-- СТРАНИЦА ТОКЕНА -->
+<div class="screen" id="scr-token">
+  <div class="topbar"><button class="back" onclick="history.back()">←</button><h2 id="t-title" style="margin:0"></h2></div>
+  <div id="t-body"></div>
+</div>
+
+<!-- СОЗДАНИЕ ТОКЕНА -->
+<div class="screen" id="scr-create">
+  <div class="topbar"><h2 style="margin:0">Создание токена</h2></div>
+  <div class="prog" id="c-prog"><i class="on"></i><i></i><i></i></div>
+
+  <div id="c-step1">
+    <h1>Шаг 1. Параметры</h1>
+    <p class="sub">История №6: все поля обязательны.</p>
+    <label class="mut sm">Название токена</label>
+    <input id="c-name" placeholder="Например: Moon Cat" oninput="ob.validateToken()">
+    <div class="err" id="ce-name"></div>
+    <label class="mut sm" style="margin-top:12px;display:block">Тикер (2–10 символов, A–Z, 0–9)</label>
+    <input id="c-ticker" placeholder="MCAT" maxlength="10" oninput="ob.validateToken()">
+    <div class="err" id="ce-ticker"></div>
+    <label class="mut sm" style="margin-top:12px;display:block">Объём эмиссии</label>
+    <input id="c-supply" inputmode="decimal" placeholder="Например: 1 000 000" oninput="ob.validateToken()">
+    <div class="err" id="ce-supply"></div>
+    <button class="btn" id="c-next1" disabled onclick="ob.createStep(2)">Продолжить</button>
+  </div>
+
+  <div id="c-step2" style="display:none">
+    <h1>Шаг 2. Проверка</h1>
+    <p class="sub">История №7: параметры и комиссии видны до эмиссии. Можно вернуться и изменить.</p>
+    <div class="card" id="c-review"></div>
+    <div class="card">
+      <div class="kv"><span class="mut">Начальная цена (bonding curve)</span><span class="v" id="c-price"></span></div>
+      <div class="kv"><span class="mut">Комиссия сети (газ)</span><span class="v">0.002 SOL</span></div>
+      <div class="kv"><span class="mut">Комиссия сервиса</span><span class="v">0.1 SOL</span></div>
+      <div class="kv"><span class="b">Итого к оплате</span><span class="v b" style="color:var(--acc)">0.102 SOL</span></div>
+    </div>
+    <p class="mut sm" id="c-balance-note"></p>
+    <button class="btn sec" onclick="ob.createStep(1)">← Изменить параметры</button>
+    <button class="btn" id="c-next2" onclick="ob.createStep(3)">Перейти к подписанию</button>
+  </div>
+
+  <div id="c-step3" style="display:none">
+    <h1>Шаг 3. Подписание</h1>
+    <p class="sub">История №8: подтвердите параметры и расходы. Подписание происходит через подключённый кошелёк.</p>
+    <div class="card" id="c-sign"></div>
+    <button class="btn" id="c-sign-btn" onclick="ob.signEmission()">Подписать и выпустить</button>
+    <p class="mut sm center" style="margin-top:8px">При отказе от подписания эмиссия не выполняется.</p>
+  </div>
+
+  <div id="c-status" style="display:none">
+    <div class="center" style="padding-top:40px" id="c-status-body"></div>
+  </div>
+</div>
+
+<!-- ОБМЕН -->
+<div class="screen" id="scr-swap">
+  <div class="topbar"><h2 style="margin:0">Обмен</h2></div>
+  <div class="card">
+    <div class="seg" id="sw-dir">
+      <button class="on" onclick="swap.dir='buy';renderSwap()">Купить</button>
+      <button onclick="swap.dir='sell';renderSwap()">Продать</button>
+    </div>
+    <label class="mut sm" style="display:block;margin-top:14px">Токен</label>
+    <select id="sw-token" onchange="renderSwap()"></select>
+    <label class="mut sm" style="display:block;margin-top:12px">Валюта расчёта</label>
+    <div class="seg" id="sw-cur">
+      <button class="on" onclick="swap.cur='SOL';renderSwap()">SOL</button>
+      <button onclick="swap.cur='USDT';renderSwap()">USDT</button>
+    </div>
+    <label class="mut sm" style="display:block;margin-top:12px">Сумма (<span id="sw-pay-label">SOL</span>)</label>
+    <input id="sw-amount" inputmode="decimal" placeholder="0.00" oninput="renderSwap()">
+    <div id="sw-quote"></div>
+  </div>
+  <button class="btn" id="sw-go" onclick="ob.confirmSwap()">Обменять</button>
+</div>
+
+<!-- ПОРТФЕЛЬ -->
+<div class="screen" id="scr-port">
+  <h1>Портфель</h1>
+  <div class="card center" style="background:linear-gradient(135deg,#13251d,#131a26)">
+    <p class="mut sm">Общая стоимость</p>
+    <p style="font-size:30px;font-weight:800" id="p-total">$0.00</p>
+    <p class="mut sm" id="p-sub"></p>
+  </div>
+  <h2>Активы</h2>
+  <div id="p-assets"></div>
+  <h2>История операций</h2>
+  <div class="f-inline" id="p-filters"></div>
+  <div id="p-history"></div>
+</div>
+
+<!-- ПРОФИЛЬ / НАСТРОЙКИ -->
+<div class="screen" id="scr-profile">
+  <h1>Профиль</h1>
+  <div class="card">
+    <div class="row"><div class="tk-ic" style="background:linear-gradient(135deg,#14f195,#9945ff)">TF</div>
+      <div class="grow"><p class="b" id="pr-email"></p><p class="mut" id="pr-wallet"></p></div></div>
+    <hr>
+    <div class="kv"><span class="mut">Сеть</span><span class="v">Solana</span></div>
+    <div class="kv"><span class="mut">Биометрия</span><span class="v" id="pr-bio"></span></div>
+    <div class="kv"><span class="mut">PIN-код</span><span class="v">установлен <span class="copy" onclick="ob.resetPin()">изменить</span></span></div>
+    <div class="kv"><span class="mut">Статус KYC</span><span class="v" id="pr-kyc"></span></div>
+  </div>
+  <h2>Уведомления</h2>
+  <p class="sub">История №26: уведомления приходят только по выбранным событиям и сохраняются между запусками.</p>
+  <div class="card" id="notif-set"></div>
+  <h2>Уведомления приложения</h2>
+  <div id="pr-notifs"></div>
+  <button class="btn sec" id="admin-btn" onclick="go('admin')" style="display:none">Панель администратора</button>
+  <button class="btn dng" onclick="logout()">Выйти</button>
+</div>
+
+<!-- АДМИНКА -->
+<div class="screen" id="scr-admin">
+  <div class="topbar"><button class="back" onclick="go('profile')">←</button><h2 style="margin:0">Администрирование</h2></div>
+  <div class="tabs">
+    <button class="on" id="at-1" onclick="adminTab=1;renderAdmin()">Токены</button>
+    <button id="at-2" onclick="adminTab=2;renderAdmin()">Инциденты</button>
+    <button id="at-3" onclick="adminTab=3;renderAdmin()">KYC / AML</button>
+  </div>
+  <div id="admin-body"></div>
+</div>
+
+<!-- НИЖНЯЯ НАВИГАЦИЯ -->
+<nav class="tabbar" id="tabbar" style="display:none">
+  <button data-s="feed" class="on" onclick="go('feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5 12 3l9 6.5V21H3z"/></svg>Лента</button>
+  <button data-s="swap" onclick="go('swap')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4M7 4 3 8M7 4l4 4M17 8v12m0 0 4-4m-4 4-4-4"/></svg>Обмен</button>
+  <button data-s="create" onclick="go('create')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Создать</button>
+  <button data-s="port" onclick="go('port')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Портфель</button>
+  <button data-s="profile" onclick="go('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>Профиль</button>
+</nav>
+
+<!-- ОВЕРЛЕЙ ПОДПИСИ КОШЕЛЬКА -->
+<div class="overlay" id="wallet-overlay">
+  <div class="sheet">
+    <p class="b" id="wo-title">Подтвердите транзакцию</p>
+    <div id="wo-body" style="margin:12px 0"></div>
+    <button class="btn" onclick="ob.walletApprove(true)">Подписать</button>
+    <button class="btn ghost" onclick="ob.walletApprove(false)">Отклонить</button>
+  </div>
+</div>
+
+<!-- ОВЕРЛЕЙ ПРИЧИНЫ БЛОКИРОВКИ -->
+<div class="overlay" id="block-overlay">
+  <div class="sheet">
+    <p class="b">Блокировка токена</p>
+    <p class="mut sm" style="margin:6px 0">Причина обязательна и сохраняется в журнале.</p>
+    <textarea id="bl-reason" rows="3" placeholder="Укажите причину блокировки…"></textarea>
+    <button class="btn dng" onclick="ob.doBlock()">Заблокировать</button>
+    <button class="btn ghost" onclick="closeOv('block-overlay')">Отмена</button>
+  </div>
+</div>
+
+<!-- ОВЕРЛЕЙ ДЕТАЛЕЙ ОПЕРАЦИИ -->
+<div class="overlay" id="op-overlay"><div class="sheet" id="op-body"></div></div>
+
+<div class="toast" id="toast"></div>
+</div>
+<script>
+/* ================= ДАННЫЕ (демо-заглушки, строго по ТЗ) ================= */
+const LS='tokenforge_v1';
+let S;
+function seed(){
+  const now=Date.now();
+  const hist=(base,n)=>Array.from({length:24},(_,i)=>({t:i,x:+(base*(1+Math.sin(i/n)*0.15+ (Math.random()-0.5)*0.06)).toFixed(6)}));
+  return {
+    user:{email:'',verified:false,wallet:null,wallets:[],bio:false,pin:null,isAdmin:false,kyc:'none',
+      notifPrefs:{newToken:true,priceChange:false,transactions:true,incidents:false}},
+    onboarded:false,
+    balances:{SOL:12.5,USDT:2450},
+    tokens:[
+      {id:'t1',name:'Moon Cat',ticker:'MCAT',supply:1000000,price:0.0042,liq:18240,author:'AliceW',created:now-86400000*2,blocked:false,sub:false,notifs:{},subs:1340,hist:hist(0.0042,5)},
+      {id:'t2',name:'Gamer Guild',ticker:'GGUILD',supply:500000,price:0.031,liq:96400,author:'ProStream',created:now-86400000*5,blocked:false,sub:false,notifs:{},subs:5210,hist:hist(0.031,7)},
+      {id:'t3',name:'Coffee Coin',ticker:'COF',supply:2500000,price:0.0009,liq:5100,author:'LocalCafe',created:now-3600000*6,blocked:false,sub:false,notifs:{},subs:210,hist:hist(0.0009,4)},
+      {id:'t4',name:'Rug Lord',ticker:'RUGL',supply:100000,price:0.01,liq:3000,author:'ScamX',created:now-86400000*9,blocked:false,sub:false,notifs:{},subs:12,hist:hist(0.01,6)},
+    ],
+    portfolio:[{tok:'SOL',amt:12.5},{tok:'USDT',amt:2450},{tok:'MCAT',amt:5000}],
+    ops:[
+      {id:'op1',date:now-86400000,type:'Покупка',tok:'MCAT',amt:'5 000 MCAT',sum:'21.0 USDT',fee:'0.21 USDT (1%)',status:'Выполнена',tx:'5Kd9…xF2a',dir:'buy'},
+      {id:'op2',date:now-86400000*2,type:'Эмиссия',tok:'MCAT',amt:'1 000 000 MCAT',sum:'0.102 SOL',fee:'0.002 SOL сеть + 0.1 SOL сервис',status:'Выполнена',tx:'8Hgt…Qp11',dir:'emit'},
+    ],
+    incidents:[
+      {id:'i1',date:now-3600000*4,type:'Подозрительная активность',desc:'Попытка вывода 45% ликвидности автором токена RUGL',status:'Новый'},
+      {id:'i2',date:now-86400000,type:'Ошибка сети',desc:'Таймаут подтверждения транзакции, средства не списаны',status:'В работе'},
+      {id:'i3',date:now-86400000*2,type:'Жалоба пользователя',desc:'Нарушение правил сообщества в описании токена COF',status:'Решён'},
+    ],
+    kycUsers:[
+      {name:'AliceW',email:'alice@mail.com',status:'Пройдено'},
+      {name:'BobTrader',email:'bob@mail.com',status:'Не пройдено'},
+      {name:'ProStream',email:'pro@stream.tv',status:'На проверке'},
+    ],
+    notifs:[{t:now-3600000*2,text:'Покупка 5 000 MCAT выполнена. Комиссия 0.21 USDT.'}],
+    pendingTx:null,
+  };
+}
+function save(){localStorage.setItem(LS,JSON.stringify(S))}
+function load(){try{S=JSON.parse(localStorage.getItem(LS))||seed()}catch(e){S=seed()} if(!S.tokens)S=seed()}
+load();
+const fmt$=n=>'$'+n.toLocaleString('ru-RU',{maximumFractionDigits:2});
+const short=a=>a?a.slice(0,4)+'…'+a.slice(-4):'—';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ================= НАВИГАЦИЯ ================= */
+let navStack=[];
+function go(id,push=true){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));
+  document.getElementById('scr-'+id).classList.add('on');
+  if(id!=='token')navStack=push?[id]:navStack;
+  if(push)navStack.push(id);
+  document.getElementById('tabbar').style.display=['feed','token','swap','create','port','profile','admin'].includes(id)?'flex':'none';
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.s===id));
+  if(id==='feed')renderFeed();
+  if(id==='swap')renderSwap(true);
+  if(id==='port')renderPort();
+  if(id==='profile')renderProfile();
+  if(id==='admin')renderAdmin();
+  if(id==='create')ob.createStep(1);
+  document.getElementById('app').querySelector('.screen.on').scrollTop=0;
+}
+history.back=function(){navStack.pop();go(navStack.pop()||'feed',false);navStack.push(document.querySelector('.screen.on').id.replace('scr-',''))};
+function toast(msg){const t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('on'),3200)}
+function closeOv(id){document.getElementById(id).classList.remove('on')}
+function notify(text){S.notifs.unshift({t:Date.now(),text});save();if(document.getElementById('scr-profile').classList.contains('on'))renderProfile()}
+
+/* ================= ОНБОРДИНГ ================= */
+const ob={
+  step:'reg',code:'',pinBuf:'',pinStage:1,pinTmp:'',pending:null,ct:{},
+  show(s){go(s,false);navStack=[]},
+  togglePass(id,el){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';el.textContent=i.type==='password'?'показать':'скрыть'},
+  validate(){
+    const em=document.getElementById('r-email').value.trim(),p1=document.getElementById('r-pass').value,p2=document.getElementById('r-pass2').value;
+    let ok=true;
+    const show=(id,msg)=>{const e=document.getElementById(id);e.textContent=msg;e.style.display=msg?'block':'none';if(msg)ok=false};
+    show('e-email',em&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)?'Некорректный формат электронной почты':'');
+    show('e-pass',p1&&!(p1.length>=8&&/[A-Za-zА-Яа-я]/.test(p1)&&/\d/.test(p1))?'Пароль: минимум 8 символов, буква и цифра':'');
+    show('e-pass2',p2&&p1!==p2?'Пароли не совпадают':'');
+    document.getElementById('r-next').disabled=!(em&&p1&&p2&&ok);
+  },
+  register(){S.user.email=document.getElementById('r-email').value.trim();save();this.genCode();go('verify',false)},
+  genCode(){this.code=String(Math.floor(100000+Math.random()*900000));document.getElementById('v-email').textContent=S.user.email;document.getElementById('v-code').textContent=this.code;document.getElementById('v-input').value='';document.getElementById('v-next').disabled=true;let s=30;const t=document.getElementById('v-resend');t.disabled=true;clearInterval(this._t);this._t=setInterval(()=>{document.getElementById('v-timer').textContent='('+s+')';if(--s<0){clearInterval(this._t);document.getElementById('v-timer').textContent='';t.disabled=false}},1000)},
+  resend(){this.genCode();toast('Новый код отправлен на почту')},
+  checkCode(){const v=document.getElementById('v-input').value.trim();document.getElementById('v-next').disabled=v.length!==6;document.getElementById('e-code').style.display='none'},
+  toWallet(){if(document.getElementById('v-input').value.trim()!==this.code){document.getElementById('e-code').textContent='Неверный код. Проверьте письмо и попробуйте снова.';document.getElementById('e-code').style.display='block';return}
+    S.user.verified=true;save();go('wallet',false);renderWallets()},
+  connectWallet(name){
+    const addr='So'+Array.from({length:40},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ123456789abcdefghijkmnopqrstuvwxyz'[Math.floor(Math.random()*58)]).join('');
+    S.user.wallet={name,addr};save();renderWallets();
+    toast('Кошелёк '+name+' подключён · сеть Solana · '+short(addr));
+  },
+  toPin(){if(!S.user.wallet)return;go('pin',false);this.pinStage=1;this.pinBuf='';this.paintPin();this.buildPad()},
+  buildPad(){const p=document.getElementById('pin-pad');p.innerHTML='';
+    [1,2,3,4,5,6,7,8,9,'',0,'⌫'].forEach(k=>{const b=document.createElement('button');b.textContent=k;
+      if(k!=='')b.onclick=()=>this.pinKey(k);p.appendChild(b)})},
+  pinKey(k){
+    if(k==='⌫'){this.pinBuf=this.pinBuf.slice(0,-1)}
+    else if(this.pinBuf.length<4)this.pinBuf+=k;
+    this.paintPin();
+    if(this.pinBuf.length===4)setTimeout(()=>this.pinDone(),150);
+  },
+  paintPin(){document.querySelectorAll('#pin-dots i').forEach((d,i)=>d.classList.toggle('f',i<this.pinBuf.length));
+    document.getElementById('pin-label').textContent=this.pinStage===1?'Задайте PIN-код (4 цифры)':'Повторите PIN-код'},
+  resetPin(){this.pinStage=1;this.pinBuf='';go('pin',false);this.paintPin();this.buildPad()},
+  pinDone(){
+    if(this.pinStage===1){this.pinTmp=this.pinBuf;this.pinBuf='';this.pinStage=2;this.paintPin();return}
+    if(this.pinTmp!==this.pinBuf){toast('PIN-коды не совпадают, попробуйте снова');this.pinStage=1;this.pinTmp='';this.pinBuf='';this.paintPin();return}
+    S.user.pin=this.pinBuf;S.user.bio=document.getElementById('bio-sw').classList.contains('on');S.user.isAdmin=true;S.onboarded=true;save();
+    go('feed',false);navStack=['feed'];renderFeed();renderProfile();
+    toast('Аккаунт создан. Добро пожаловать в TokenForge!');
+  },
+  /* --- создание токена --- */
+  validateToken(){
+    const n=document.getElementById('c-name').value.trim(),t=document.getElementById('c-ticker').value.trim().toUpperCase(),s=document.getElementById('c-supply').value.replace(/\s/g,'');
+    let ok=true;const show=(id,m)=>{const e=document.getElementById(id);e.textContent=m;e.style.display=m?'block':'none';if(m)ok=false};
+    show('ce-name',n&&n.length<3?'Название: минимум 3 символа':'');
+    show('ce-ticker',t&&!/^[A-Z0-9]{2,10}$/.test(t)?'Тикер: 2–10 символов A–Z, 0–9':'');
+    show('ce-supply',s&&!(+s>0)?'Объём должен быть положительным числом':'');
+    document.getElementById('c-next1').disabled=!(n.length>=3&&/^[A-Z0-9]{2,10}$/.test(t)&&+s>0);
+  },
+  createStep(n){
+    ['c-step1','c-step2','c-step3','c-status'].forEach((id,i)=>document.getElementById(id).style.display=(i+1===n)?'block':'none');
+    document.querySelectorAll('#c-prog i').forEach((p,i)=>p.classList.toggle('on',i<n));
+    if(n===2){
+      this.ct={name:document.getElementById('c-name').value.trim(),ticker:document.getElementById('c-ticker').value.trim().toUpperCase(),supply:+document.getElementById('c-supply').value.replace(/\s/g,'')};
+      this.ct.price=+(0.0008+Math.random()*0.004).toFixed(6);
+      document.getElementById('c-review').innerHTML=
+        kv('Название',esc(this.ct.name))+kv('Тикер',this.ct.ticker)+kv('Объём эмиссии',this.ct.supply.toLocaleString('ru-RU'));
+      document.getElementById('c-price').textContent=this.ct.price.toFixed(6)+' SOL';
+      const enough=S.balances.SOL>=0.102;
+      document.getElementById('c-balance-note').textContent=enough?'Баланса достаточно: '+S.balances.SOL.toFixed(3)+' SOL.':'Недостаточно SOL на балансе ('+S.balances.SOL.toFixed(3)+' SOL). Пополните кошелёк.';
+      document.getElementById('c-balance-note').style.color=enough?'var(--mut)':'var(--bad)';
+      document.getElementById('c-next2').disabled=!enough;
+    }
+    if(n===3){
+      document.getElementById('c-sign').innerHTML=kv('Токен',esc(this.ct.name)+' ('+this.ct.ticker+')')+kv('Итого к оплате','0.102 SOL')+kv('Кошелёк',S.user.wallet.name+' · '+short(S.user.wallet.addr));
+      document.getElementById('c-sign-btn').disabled=false;
+    }
+  },
+  signEmission(){
+    const b=document.getElementById('c-sign-btn');if(b.disabled)return;b.disabled=true;
+    this.walletTx({title:'Эмиссия токена '+this.ct.ticker,body:kv('Оплата','0.102 SOL')+kv('Получатель','TokenForge Program')},ok=>{
+      if(!ok){toast('Подписание отклонено — эмиссия не выполнена');b.disabled=false;return}
+      this.emitFlow();
+    });
+  },
+  emitFlow(){
+    const st=document.getElementById('c-status-body');
+    st.innerHTML='<div class="step-ic" style="background:rgba(255,181,71,.15)"><div class="spin"></div></div><h2>Обрабатывается</h2><p class="sub" style="margin-top:6px">Эмиссия и создание пула ликвидности…</p>';
+    document.getElementById('c-status').style.display='block';document.getElementById('c-step3').style.display='none';
+    setTimeout(()=>{
+      if(!S.user.verified){st.innerHTML='<div class="step-ic" style="background:rgba(255,92,108,.15)"><span style="color:var(--bad);font-size:24px">✕</span></div><h2>Ошибка</h2><p class="sub" style="margin:6px 0">Почта не подтверждена — операция с активами ограничена.</p><button class="btn sec" onclick="go(\'feed\')">На главную</button>';return}
+      S.balances.SOL-=0.102;
+      const id='t'+Date.now(),addr='Tok'+Array.from({length:38},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ123456789abcdefghijkmnopqrstuvwxyz'[Math.floor(Math.random()*58)]).join(''),tx='Tx'+Array.from({length:10},()=>'ABCDEFGH123456789'[Math.floor(Math.random()*17)]).join('');
+      S.tokens.unshift({id,name:this.ct.name,ticker:this.ct.ticker,supply:this.ct.supply,price:this.ct.price,liq:+(this.ct.supply*this.ct.price*0.1).toFixed(0),author:S.user.email.split('@')[0],created:Date.now(),blocked:false,sub:false,notifs:{},subs:1,hist:Array.from({length:24},(_,i)=>({t:i,x:this.ct.price})),addr,tx});
+      S.portfolio.push({tok:this.ct.ticker,amt:this.ct.supply});
+      S.ops.unshift({id:'op'+Date.now(),date:Date.now(),type:'Эмиссия',tok:this.ct.ticker,amt:this.ct.supply.toLocaleString('ru-RU')+' '+this.ct.ticker,sum:'0.102 SOL',fee:'0.002 SOL сеть + 0.1 SOL сервис',status:'Выполнена',tx,dir:'emit',addr});
+      save();
+      /* История №10–11: пул создан автоматически + начальная цена */
+      st.innerHTML='<div class="step-ic" style="background:rgba(20,241,149,.15)"><span style="color:var(--acc);font-size:24px">✓</span></div><h2>Успешно</h2>'+
+        '<p class="sub" style="margin:6px 0">Пул ликвидности создан автоматически. Начальная цена по bonding curve: <b>'+this.ct.price.toFixed(6)+' SOL</b>. Токен доступен для обмена.</p>'+
+        '<div class="card" style="text-align:left">'+kv('Адрес токена','<span class="copy" onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+addr+'\');toast(\'Адрес скопирован\')">'+short(addr)+' ⧉</span>')+kv('Транзакция',tx)+'</div>'+
+        '<button class="btn" onclick="openToken(\''+id+'\')">Открыть страницу токена</button><button class="btn ghost" onclick="go(\'feed\')">В ленту</button>';
+      notify('Токен '+this.ct.ticker+' успешно выпущен. Пул ликвидности создан.');
+    },2500);
+  },
+  /* --- подписание в кошельке --- */
+  walletTx(data,cb){
+    document.getElementById('wo-title').textContent=data.title;
+    document.getElementById('wo-body').innerHTML=data.body+kv('Сеть','Solana');
+    document.getElementById('wallet-overlay').classList.add('on');
+    this._cb=cb;
+  },
+  walletApprove(ok){closeOv('wallet-overlay');const cb=this._cb;this._cb=null;cb&&cb(ok)},
+  /* --- обмен --- */
+  confirmSwap(){
+    const q=swapQuote();if(!q)return;
+    if(S.user.kyc==='none'){notify('Операция ограничена: не пройдена проверка KYC/AML.');toast('Операция ограничена: требуется верификация KYC.');return}
+    if(q.dir==='buy'&&S.balances[q.cur]<q.pay){toast('Недостаточно '+q.cur+' на балансе');return}
+    if(q.dir==='sell'){const p=S.portfolio.find(x=>x.tok===q.tk.ticker);if(!p||p.amt<q.tokens){toast('Недостаточно токенов '+q.tk.ticker);return}}
+    this.walletTx({title:(q.dir==='buy'?'Покупка ':'Продажа ')+q.tk.ticker,body:kv('Сумма',q.pay.toFixed(4)+' '+q.payCur)+kv('К получению',q.get.toFixed(4)+' '+q.getCur)+kv('Комиссия (≤1%)',q.fee.toFixed(4)+' '+q.cur)},ok=>{
+      if(!ok){toast('Подписание отклонено — средства не списаны');return}
+      swapExecute(q);
+    });
+  },
+  /* --- админ --- */
+  blockTarget:null,
+  openBlock(id){this.blockTarget=id;document.getElementById('bl-reason').value='';document.getElementById('block-overlay').classList.add('on')},
+  doBlock(){
+    const r=document.getElementById('bl-reason').value.trim();
+    if(!r){toast('Укажите причину блокировки');return}
+    const t=S.tokens.find(x=>x.id===this.blockTarget);t.blocked=true;t.blockReason=r;
+    S.incidents.unshift({id:'i'+Date.now(),date:Date.now(),type:'Модерация',desc:'Токен '+t.ticker+' заблокирован: '+r,status:'Решён'});
+    closeOv('block-overlay');save();renderAdmin();renderFeed();toast('Токен '+t.ticker+' заблокирован. Действие записано в журнал.');
+  },
+  setIncident(id,st){const i=S.incidents.find(x=>x.id===id);i.status=st;save();renderAdmin();toast('Статус инцидента: '+st+'. Записано в журнал.')},
+  setKyc(i,st){S.kycUsers[i].status=st;save();renderAdmin();toast('Статус KYC обновлён: '+st)},
+};
+function kv(k,v){return '<div class="kv"><span class="mut">'+k+'</span><span class="v">'+v+'</span></div>'}
+
+function renderWallets(){
+  const names=['Phantom','Solflare','Backpack','Trust Wallet'];
+  document.getElementById('w-list').innerHTML=names.map(n=>{
+    const on=S.user.wallet&&S.user.wallet.name===n;
+    return '<div class="card row spread"><div class="row"><div class="tk-ic" style="background:#1f2b3f;color:#9fc1ff">'+n[0]+'</div><div><p class="b sm">'+n+'</p><p class="mut">'+(on?'Подключён · '+short(S.user.wallet.addr)+' · Solana':'Solana')+'</p></div></div>'+
+    (on?'<span class="chip">подключён</span>':'<button class="btn sm-btn" onclick="ob.connectWallet(\''+n+'\')">Подключить</button>')+'</div>'}).join('')+
+    '<button class="btn" id="w-next" '+(S.user.wallet?'':'disabled')+' onclick="ob.toPin()">Продолжить</button>';
+}
+
+/* ================= ЛЕНТА ================= */
+let feedTab='new';
+function tokenCard(t){
+  const col='hsl('+(Math.abs([...t.ticker].reduce((a,c)=>a+c.charCodeAt(0),0))%360)+' 70% 55%)';
+  return '<div class="card list-item" style="cursor:pointer" onclick="openToken(\''+t.id+'\')">'+
+   '<div class="tk-ic" style="background:'+col+'">'+t.ticker.slice(0,4)+'</div>'+
+   '<div class="grow"><p class="b sm">'+esc(t.name)+' <span class="mut">'+t.ticker+'</span></p>'+
+   '<p class="mut">Цена: '+t.price.toFixed(6)+' SOL · Ликвидность: '+fmt$(t.liq)+'</p></div>'+
+   '<div style="text-align:right"><p class="b sm">'+(t.price*1e6/t.hist[0].x).toFixed(1)+'%</p>'+(t.sub?'<span class="chip" style="margin-top:4px">подписка</span>':'')+'</div></div>';
+}
+function renderFeed(){
+  document.getElementById('tab-new').classList.toggle('on',feedTab==='new');
+  document.getElementById('tab-pop').classList.toggle('on',feedTab==='pop');
+  document.getElementById('tab-subs').classList.toggle('on',feedTab==='subs');
+  const q=document.getElementById('f-search').value.trim().toLowerCase();
+  let list=S.tokens.filter(t=>!t.blocked); /* №23: заблокированные не отображаются */
+  if(q)list=list.filter(t=>t.name.toLowerCase().includes(q)||t.ticker.toLowerCase().includes(q)); /* №24 */
+  if(feedTab==='new')list=[...list].sort((a,b)=>b.created-a.created);
+  if(feedTab==='pop')list=[...list].sort((a,b)=>b.subs-a.subs);
+  if(feedTab==='subs')list=list.filter(t=>t.sub);
+  document.getElementById('feed-list').innerHTML=list.length?list.map(tokenCard).join(''):
+    '<div class="empty">Ничего не найдено.<br>Попробуйте изменить запрос или оформить подписки.</div>';
+}
+function openToken(id){curToken=id;go('token');renderToken()}
+
+/* ================= СТРАНИЦА ТОКЕНА ================= */
+let curToken=null,chartPeriod='24ч';
+function renderToken(){
+  const t=S.tokens.find(x=>x.id===curToken);if(!t)return;
+  document.getElementById('t-title').textContent=t.name+' ('+t.ticker+')';
+  const chP=t.price*1e6/t.hist[0].x>=0;
+  const np=t.notifs||{};const gp=S.user.notifPrefs;
+  document.getElementById('t-body').innerHTML=
+   '<div class="card"><div class="row spread"><div><p class="mut sm">Цена</p><p style="font-size:26px;font-weight:800">'+t.price.toFixed(6)+' SOL</p></div><span class="chip '+(chP?'':'b')+'">'+(chP?'▲':'▼')+' '+Math.abs(t.price*1e6/t.hist[0].x).toFixed(1)+'%</span></div>'+
+   '<div class="tabs" style="margin-bottom:0">'+['1ч','24ч','7д','30д'].map(p=>'<button class="'+(chartPeriod===p?'on':'')+'" onclick="chartPeriod=\''+p+'\';renderToken()">'+p+'</button>').join('')+'</div>'+
+   '<canvas class="chart" id="chart"></canvas>'+
+   '<div class="f-inline" style="margin-top:8px"><span class="mut sm">Метрики:</span><span class="chip v">объём торгов</span><span class="chip w">ликвидность</span></div></div>'+
+   /* №14–15: ликвидность и лимит вывода */
+   '<div class="card"><h2 style="margin-top:0">Ликвидность и защита</h2>'+
+   kv('Объём пула ликвидности',fmt$(t.liq)+' (SOL/USDT)')+
+   kv('Макс. единовременный вывод автора','<b style="color:var(--acc)">30%</b>')+
+   '<p class="mut sm" style="margin-top:8px">Анти-рагпул: смарт-контракт отклоняет вывод более 30% ликвидности автором. Ограничение встроено в контракт.</p>'+
+   (t.blocked?'<p class="sm" style="color:var(--bad);margin-top:8px">Токен заблокирован: '+esc(t.blockReason||'')+'</p>':'')+'</div>'+
+   /* №25–26: подписка и уведомления */
+   '<div class="card"><h2 style="margin-top:0">Отслеживание</h2>'+
+   '<div class="row spread"><div><p class="b sm">Подписка на '+(t.sub?'токен и автора':'токен и автора')+'</p><p class="mut">'+(t.sub?'Вы подписаны':'Получайте обновления проекта')+'</p></div>'+
+   '<div class="sw '+(t.sub?'on':'')+'" onclick="toggleSub(\''+t.id+'\')"></div></div>'+
+   (t.sub?'<div id="sub-notifs" style="margin-top:10px">'+
+     swRow('Новые выпуски автора','Новые токены этого автора','newToken',gp.newToken)+
+     swRow('Изменение цены','Движение цены токена','priceChange',gp.priceChange)+
+     swRow('Транзакции','Операции с этим токеном','transactions',gp.transactions)+
+   '</div>':'')+'</div>'+
+   '<button class="btn" '+(t.blocked?'disabled':'')+' onclick="swapPreselect(\''+t.id+'\')">Купить / продать</button>';
+  drawChart(t);
+}
+function swRow(title,sub,key,val){return '<div class="row spread" style="padding:9px 0;border-top:1px solid var(--line)"><div><p class="b sm">'+title+'</p><p class="mut">'+sub+'</p></div><div class="sw '+(val?'on':'')+'" onclick="togglePref(\''+key+'\')"></div></div>'}
+function togglePref(k){S.user.notifPrefs[k]=!S.user.notifPrefs[k];save();
+  if(curToken&&document.getElementById('scr-token').classList.contains('on'))renderToken();
+  if(document.getElementById('scr-profile').classList.contains('on'))renderProfile();
+  toast('Настройки уведомлений сохранены');}
+function toggleSub(id){const t=S.tokens.find(x=>x.id===id);t.sub=!t.sub;save();renderToken();
+  toast(t.sub?'Подписка оформлена':'Подписка отменена — проект удалён из отслеживаемых, уведомления прекращены');}
+function drawChart(t){
+  const c=document.getElementById('chart');if(!c)return;const ctx=c.getContext('2d');
+  const w=c.width=c.offsetWidth*2,h=c.height=300;ctx.scale(1,1);
+  const n={'1ч':8,'24ч':24,'7д':24,'30д':24}[chartPeriod]||24;
+  const data=t.hist.slice(0,n).map(p=>p.x);
+  const min=Math.min(...data),max=Math.max(...data),rng=max-min||1;
+  ctx.clearRect(0,0,w,h);
+  const pts=data.map((v,i)=>[i/(data.length-1)*w, h-20-((v-min)/rng)*(h-50)]);
+  const grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,'rgba(20,241,149,.25)');grad.addColorStop(1,'rgba(20,241,149,0)');
+  ctx.beginPath();ctx.moveTo(0,h);pts.forEach(p=>ctx.lineTo(p[0],p[1]));ctx.lineTo(w,h);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.strokeStyle='#14f195';ctx.lineWidth=3;ctx.stroke();
+}
+
+/* ================= ОБМЕН ================= */
+let swap={dir:'buy',cur:'SOL'};
+function swapPreselect(id){swap.tokId=id;go('swap')}
+function renderSwap(rebuild){
+  const sel=document.getElementById('sw-token');
+  if(rebuild||!sel.options.length){sel.innerHTML=S.tokens.filter(t=>!t.blocked).map(t=>'<option value="'+t.id+'"'+(swap.tokId===t.id?' selected':'')+'>'+esc(t.name)+' ('+t.ticker+')</option>').join('');}
+  document.querySelectorAll('#sw-dir button').forEach(b=>b.classList.toggle('on',b.textContent===(swap.dir==='buy'?'Купить':'Продать')));
+  document.querySelectorAll('#sw-cur button').forEach(b=>b.classList.toggle('on',b.textContent===swap.cur));
+  const tk=S.tokens.find(x=>x.id===sel.value);
+  document.getElementById('sw-pay-label').textContent=swap.dir==='buy'?swap.cur:tk.ticker;
+  const q=swapQuote();
+  const box=document.getElementById('sw-quote');
+  if(!q||!q.pay){box.innerHTML='<p class="mut sm" style="margin-top:10px">Введите сумму — условия появятся до подтверждения.</p>';document.getElementById('sw-go').disabled=true;document.getElementById('sw-go').textContent='Обменять';return}
+  document.getElementById('sw-go').disabled=false;
+  /* №18: выбранные токен, направление и валюта отображены перед расчётом */
+  box.innerHTML='<hr>'+kv('Токен',esc(tk.name)+' · '+(swap.dir==='buy'?'покупка':'продажа'))+kv('Валюта',swap.cur)+
+  kv('Курс','1 '+tk.ticker+' = '+q.rate.toFixed(6)+' '+swap.cur)+
+  kv('Вы получите',q.get.toFixed(4)+' '+q.getCur)+
+  kv('Комиссия сервиса (≤1%)',q.fee.toFixed(4)+' '+swap.cur)+
+  kv('Проскальзывание','0.5%')+
+  kv('Мин. сумма к получению',q.minGet.toFixed(4)+' '+q.getCur);
+  document.getElementById('sw-go').textContent=(swap.dir==='buy'?'Купить ':'Продать ')+tk.ticker;
+}
+function swapQuote(){
+  const tk=S.tokens.find(x=>x.id===document.getElementById('sw-token').value);if(!tk)return null;
+  const pay=parseFloat(document.getElementById('sw-amount').value.replace(',','.'));if(!pay||pay<=0)return null;
+  /* bonding curve: цена растёт с объёмом покупки */
+  const k=1+pay/(tk.liq+1);
+  const rate=swap.dir==='buy'?tk.price*k:tk.price/k;
+  const dir=swap.dir,cur=swap.cur;
+  let get,fee;
+  if(dir==='buy'){fee=pay*0.01;get=(pay-fee)/rate;}
+  else{fee=pay*rate*0.01;get=pay*rate-fee;}
+  const minGet=get*0.995;
+  return {tk,dir,cur,pay,payCur:dir==='buy'?cur:tk.ticker,get,getCur:dir==='buy'?tk.ticker:cur,rate,fee,minGet,tokens:dir==='sell'?pay:get};
+}
+let lastTx=null;
+function swapExecute(q){
+  const btn=document.getElementById('sw-go');btn.disabled=true;
+  lastTx={q,status:'Ожидает подтверждения',tx:'Tx'+Array.from({length:10},()=>'ABCDEFGH123456789'[Math.floor(Math.random()*17)]).join('')};
+  toast('Транзакция отправлена · статус: <b>Ожидает подтверждения</b>');
+  setTimeout(()=>{
+    lastTx.status='Выполнена';
+    if(q.dir==='buy'){
+      S.balances[q.cur]-=q.pay;
+      let p=S.portfolio.find(x=>x.tok===q.tk.ticker);if(!p){p={tok:q.tk.ticker,amt:0};S.portfolio.push(p)}p.amt+=q.tokens;
+      q.tk.liq+=q.pay;q.tk.price*=(1+q.pay/(q.tk.liq+1)*0.5);
+      S.ops.unshift({id:'op'+Date.now(),date:Date.now(),type:'Покупка',tok:q.tk.ticker,amt:q.tokens.toLocaleString('ru-RU',{maximumFractionDigits:2})+' '+q.tk.ticker,sum:q.pay.toFixed(4)+' '+q.cur,fee:q.fee.toFixed(4)+' '+q.cur+' (1%)',status:'Выполнена',tx:lastTx.tx,dir:'buy'});
+      notify('Покупка '+q.tk.ticker+' выполнена. Получено '+q.get.toFixed(2)+' '+q.tk.ticker+'.');
+    }else{
+      const p=S.portfolio.find(x=>x.tok===q.tk.ticker);if(p)p.amt-=q.pay;
+      S.balances[q.cur]+=q.get;
+      q.tk.liq-=q.get*0.5;q.tk.price*=Math.max(0.5,1-q.get/(q.tk.liq+1)*0.3);
+      S.ops.unshift({id:'op'+Date.now(),date:Date.now(),type:'Продажа',tok:q.tk.ticker,amt:q.pay.toLocaleString('ru-RU',{maximumFractionDigits:2})+' '+q.tk.ticker,sum:q.get.toFixed(4)+' '+q.cur,fee:q.fee.toFixed(4)+' '+q.cur+' (1%)',status:'Выполнена',tx:lastTx.tx,dir:'sell'});
+      notify('Продажа '+q.tk.ticker+' выполнена. Получено '+q.get.toFixed(2)+' '+q.cur+'.');
+    }
+    save();btn.disabled=false;
+    renderSwap();
+    toast('Обмен выполнен. TX: <b>'+lastTx.tx+'</b> · уведомление отправлено');
+  },2000);
+}
+
+/* ================= ПОРТФЕЛЬ ================= */
+let pf={type:'Все',tok:'Все'};
+function renderPort(){
+  let total=S.balances.USDT+S.balances.SOL*150;
+  S.portfolio.filter(p=>!['SOL','USDT'].includes(p.tok)).forEach(p=>{
+    const t=S.tokens.find(x=>x.ticker===p.tok);if(t)total+=p.amt*t.price*150;
+  });
+  document.getElementById('p-total').textContent=fmt$(total);
+  document.getElementById('p-sub').textContent='≈ '+S.balances.SOL.toFixed(3)+' SOL · '+fmt$(S.balances.USDT)+' USDT';
+  document.getElementById('p-assets').innerHTML=S.portfolio.filter(p=>p.amt>0).map(p=>{
+    const t=S.tokens.find(x=>x.ticker===p.tok);
+    const val=['SOL','USDT'].includes(p.tok)?p.amt*(p.tok==='SOL'?150:1):(t?t.price*150*p.amt:0);
+    const col='hsl('+(Math.abs([...p.tok].reduce((a,c)=>a+c.charCodeAt(0),0))%360)+' 70% 55%)';
+    const bg=p.tok==='SOL'?'linear-gradient(135deg,#14f195,#9945ff)':p.tok==='USDT'?'#1f6f4a':col;
+    return '<div class="list-item"><div class="tk-ic" style="background:'+bg+'">'+p.tok.slice(0,4)+'</div>'+
+    '<div class="grow"><p class="b sm">'+p.tok+'</p><p class="mut">'+p.amt.toLocaleString('ru-RU',{maximumFractionDigits:2})+'</p></div><p class="b sm">'+fmt$(val)+'</p></div>';
+  }).join('');
+  /* №13: фильтрация по типу и токену */
+  const types=['Все','Покупка','Продажа','Эмиссия'];
+  const toks=['Все',...new Set(S.ops.map(o=>o.tok))];
+  document.getElementById('p-filters').innerHTML='<select style="width:auto;padding:8px 12px;margin:0" onchange="pf.type=this.value;renderPort()">'+types.map(t=>'<option '+(pf.type===t?'selected':'')+'>'+t+'</option>').join('')+'</select>'+
+  '<select style="width:auto;padding:8px 12px;margin:0" onchange="pf.tok=this.value;renderPort()">'+toks.map(t=>'<option '+(pf.tok===t?'selected':'')+'>'+t+'</option>').join('')+'</select>';
+  const list=S.ops.filter(o=>(pf.type==='Все'||o.type===pf.type)&&(pf.tok==='Все'||o.tok===pf.tok));
+  document.getElementById('p-history').innerHTML=list.length?list.map((o,i)=>
+    '<div class="list-item" style="cursor:pointer" onclick="opDetails(\''+o.id+'\')">'+
+    '<div class="dot" style="background:'+(o.dir==='buy'?'var(--acc)':o.dir==='sell'?'var(--bad)':'var(--acc2)')+'"></div>'+
+    '<div class="grow"><p class="b sm">'+o.type+' · '+o.tok+'</p><p class="mut">'+new Date(o.date).toLocaleString('ru-RU')+' · '+o.status+'</p></div>'+
+    '<p class="b sm">'+o.sum+'</p></div>').join(''):'<div class="empty">Операций не найдено.</div>';
+}
+function opDetails(id){
+  const o=S.ops.find(x=>x.id===id);
+  document.getElementById('op-body').innerHTML='<p class="b">Детали операции</p><div style="margin:12px 0">'+
+   kv('Дата',new Date(o.date).toLocaleString('ru-RU'))+kv('Тип',o.type)+kv('Токен',o.tok)+kv('Сумма',o.amt)+kv('Стоимость',o.sum)+
+   kv('Комиссия',o.fee)+kv('Статус',o.status)+kv('ID транзакции','<span class="copy" onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+o.tx+'\');toast(\'Скопировано\')">'+o.tx+' ⧉</span>')+
+   (o.addr?kv('Адрес токена',short(o.addr)):'')+'</div>'+
+   '<button class="btn" onclick="closeOv(\'op-overlay\')">Закрыть</button>';
+  document.getElementById('op-overlay').classList.add('on');
+}
+
+/* ================= ПРОФИЛЬ ================= */
+function renderProfile(){
+  document.getElementById('pr-email').textContent=S.user.email||'demo@tokenforge.app';
+  document.getElementById('pr-wallet').textContent=S.user.wallet?S.user.wallet.name+' · '+short(S.user.wallet.addr):'кошелёк не подключён';
+  document.getElementById('pr-bio').textContent=S.user.bio?'включена':'отключена';
+  const kc=document.getElementById('pr-kyc');
+  kc.innerHTML=S.user.kyc==='done'?'<span style="color:var(--acc)">Пройдено</span>':'<span style="color:var(--warn)">Не пройдено</span> <span class="copy" onclick="S.user.kyc=\'done\';save();renderProfile();toast(\'Верификация KYC пройдена\')">пройти</span>';
+  document.getElementById('kyc-chip').style.display=S.user.kyc==='done'?'none':'inline-flex';
+  document.getElementById('kyc-chip').textContent='KYC не пройден';
+  document.getElementById('kyc-chip').style.background='rgba(255,181,71,.12)';document.getElementById('kyc-chip').style.color='var(--warn)';
+  document.getElementById('admin-btn').style.display=S.user.isAdmin?'block':'none';
+  const gp=S.user.notifPrefs;
+  document.getElementById('notif-set').innerHTML=
+   swRow('Новые токены','Уведомления о новых выпусках','newToken',gp.newToken)+
+   swRow('Изменение цен','Движение цен по подпискам','priceChange',gp.priceChange)+
+   swRow('Транзакции','Статусы ваших операций','transactions',gp.transactions)+
+   swRow('Инциденты','Информация об инцидентах','incidents',gp.incidents);
+  document.getElementById('pr-notifs').innerHTML=S.notifs.length?S.notifs.slice(0,10).map(n=>'<div class="notif">'+esc(n.text)+'<br><span class="mut">'+new Date(n.t).toLocaleString('ru-RU')+'</span></div>').join(''):'<div class="empty">Уведомлений пока нет.</div>';
+}
+
+/* ================= АДМИНКА ================= */
+let adminTab=1;
+function renderAdmin(){
+  [1,2,3].forEach(i=>document.getElementById('at-'+i).classList.toggle('on',adminTab===i));
+  const b=document.getElementById('admin-body');
+  if(adminTab===1){ /* №27 */
+    b.innerHTML='<p class="sub">Блокировка со скрытием из ленты и запретом обмена. Причина обязательна, действие пишется в журнал.</p>'+
+    S.tokens.map(t=>'<div class="card"><div class="row spread"><div><p class="b sm">'+esc(t.name)+' ('+t.ticker+')</p><p class="mut">автор: '+t.author+' · ликвидность '+fmt$(t.liq)+'</p>'+(t.blocked?'<p class="sm" style="color:var(--bad)">Заблокирован: '+esc(t.blockReason)+'</p>':'')+'</div>'+
+    (t.blocked?'<span class="chip b">заблокирован</span>':'<button class="btn sm-btn dng" onclick="ob.openBlock(\''+t.id+'\')">Заблокировать</button>')+'</div></div>').join('');
+  }
+  if(adminTab===2){ /* №28 */
+    b.innerHTML='<p class="sub">Фильтры по типу и статусу. Статусы: Новый, В работе, Решён.</p><div class="f-inline" id="inc-f">'+
+    ['Все','Новый','В работе','Решён'].map(s=>'<button class="'+(incF===s?'on':'')+'" onclick="incF=\''+s+'\';renderAdmin()">'+s+'</button>').join('')+'</div>'+
+    S.incidents.filter(i=>incF==='Все'||i.status===incF).map(i=>'<div class="card"><div class="row spread"><div class="grow"><p class="b sm">'+i.type+'</p><p class="mut sm">'+esc(i.desc)+'</p><p class="mut">'+new Date(i.date).toLocaleString('ru-RU')+' · <span class="chip '+(i.status==='Новый'?'w':i.status==='В работе'?'v':'')+'">'+i.status+'</span></p></div></div>'+
+    '<div class="f-inline" style="margin-top:8px">'+['Новый','В работе','Решён'].map(s=>'<button class="'+(i.status===s?'on':'')+'" onclick="ob.setIncident(\''+i.id+'\',\''+s+'\')">'+s+'</button>').join('')+'</div></div>').join('');
+  }
+  if(adminTab===3){ /* №29 */
+    b.innerHTML='<p class="sub">Пользователи без верификации ограничены в операциях и получают уведомление о причине.</p>'+
+    S.kycUsers.map((u,i)=>'<div class="card"><div class="row spread"><div><p class="b sm">'+u.name+'</p><p class="mut">'+u.email+'</p></div><span class="chip '+(u.status==='Пройдено'?'':u.status==='На проверке'?'w':'b')+'">'+u.status+'</span></div>'+
+    '<div class="f-inline" style="margin-top:8px">'+['Пройдено','На проверке','Не пройдено'].map(s=>'<button class="'+(u.status===s?'on':'')+'" onclick="ob.setKyc('+i+',\''+s+'\')">'+s+'</button>').join('')+'</div></div>').join('');
+  }
+}
+let incF='Все';
+
+/* ================= СБРОС / ДЕМО ================= */
+function logout(){if(confirm('Сбросить демо-данные и выйти?')){localStorage.removeItem(LS);location.reload()}}
+function demo(){
+  S=seed();S.user.email='demo@tokenforge.app';S.user.verified=true;S.user.wallet={name:'Phantom',addr:'SoL3x9f…dEmoW4ll3t'};S.user.pin='0000';S.user.bio=true;S.user.isAdmin=true;S.user.kyc='done';S.onboarded=true;save();
+  go('feed',false);navStack=['feed'];renderFeed();renderProfile();
+  toast('Демо-режим: все функции доступны');
+}
+
+/* ================= СТАРТ ================= */
+if(S.onboarded){go('feed',false);navStack=['feed']}
+</script>
+</body>
+</html>
